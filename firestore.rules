@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Profile data is readable by its owner. All writes go through trusted
+    // server routes so membership and Key balances cannot be forged in the client.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+
+      match /key_transactions/{transactionId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+
+      match /unlocked_slips/{slipId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    // ── Slips ────────────────────────────────────────────────────────────────
+    match /users/{userId}/slips/{slipId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+
+      // Matches inside a slip
+      match /matches/{matchId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    // ── Legacy flat matches (backward compat, read-only is fine) ─────────────
+    match /users/{userId}/matches/{matchId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /payments/{orderId} {
+      allow read, write: if false;
+    }
+
+    // ── Deny everything else ─────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
