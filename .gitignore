@@ -47,3 +47,4 @@ private_key_for_vercel.txt
 next-env.d.ts
 
 .vercel
+.env*.local
